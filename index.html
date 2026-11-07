@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Cyber Cafe - Quick Print Utility</title>
+    <!-- Cropper.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #cbd5e1;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        header p {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+        .tab-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background: #f8fafc;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn-secondary {
+            background: #64748b;
+        }
+        .tool-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .img-container {
+            max-height: 350px;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .img-container img {
+            max-width: 100%;
+            display: block;
+        }
+        .passport-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            justify-items: center;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            width: 100%;
+            max-width: 210mm;
+            margin: 0 auto;
+        }
+        .passport-item {
+            width: 3.2cm;
+            height: 4.2cm;
+            border: 5px solid #000;
+            object-fit: cover;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #print-section, #print-section * {
+                visibility: visible;
+            }
+            #print-section {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Smart Cyber Cafe & Mobile Zone</h1>
+        <p>Khetasarai | Quick Print Utility</p>
+    </header>
+
+    <div class="card">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('docTab')">Crop & Print Doc</button>
+            <button class="tab-btn" onclick="switchTab('passTab')">Passport (3.2x4.2cm)</button>
+        </div>
+
+        <!-- TAB 1: Document & Screenshot Cropper -->
+        <div id="docTab" class="tab-content active">
+            <div class="upload-area" onclick="document.getElementById('docFile').click()">
+                <p>📁 Click to Upload WhatsApp Screenshot / ID</p>
+                <input type="file" id="docFile" accept="image/*" onchange="loadDocImage(event)">
+            </div>
+
+            <div id="docEditor" style="display:none;">
+                <div class="img-container">
+                    <img id="imageToCrop" src="" alt="Source">
+                </div>
+                <div class="tool-actions">
+                    <button class="btn btn-secondary" onclick="rotateImage(90)">Rotate 90° ↻</button>
+                    <button class="btn btn-secondary" onclick="flipImage()">Flip ⇄</button>
+                    <button class="btn" onclick="cropAndPrintDoc()">Crop & Print A4</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Passport Photo Grid Generator -->
+        <div id="passTab" class="tab-content">
+            <div class="upload-area" onclick="document.getElementById('passFile').click()">
+                <p>📷 Upload Photo (Auto 6 PCS Grid + 5px Border)</p>
+                <input type="file" id="passFile" accept="image/*" onchange="loadPassport(event)">
+            </div>
+
+            <div id="passEditor" style="display:none; text-align: center;">
+                <p style="margin-bottom: 8px; font-weight: 600; font-size: 0.9rem;">A4 Sheet Preview (6 Photos):</p>
+                <div style="overflow-x: auto; background: #e2e8f0; padding: 10px; margin-bottom: 10px;">
+                    <div id="passportGridContainer" class="passport-preview-grid"></div>
+                </div>
+                <button class="btn" onclick="window.print()">Print A4 Sheet Now</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="print-section" style="display:none;"></div>
+
+<!-- Cropper.js JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script>
+    let cropper = null;
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    function loadDocImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById('imageToCrop');
+                img.src = e.target.result;
+                document.getElementById('docEditor').style.display = 'block';
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(img, { aspectRatio: NaN, viewMode: 1, autoCropArea: 0.9 });
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function rotateImage(deg) { if (cropper) cropper.rotate(deg); }
+    let scaleXVal = 1;
+    function flipImage() { if (cropper) { scaleXVal *= -1; cropper.scaleX(scaleXVal); } }
+
+    function cropAndPrintDoc() {
+        if (!cropper) return;
+        const canvas = cropper.getCroppedCanvas({ maxWidth: 2400, maxHeight: 3500, fillColor: '#fff' });
+        const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
+        const printSec = document.getElementById('print-section');
+        printSec.style.display = 'block';
+        printSec.innerHTML = `<div style="text-align:center; padding:5px;"><img src="${dataUrl}" style="max-width:100%; height:auto; max-height:280mm; display:block; margin: 0 auto;"></div>`;
+        window.print();
+        printSec.style.display = 'none';
+    }
+
+    function loadPassport(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const url = e.target.result;
+                const container = document.getElementById('passportGridContainer');
+                container.innerHTML = '';
+                for(let i=0; i<6; i++) {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.className = 'passport-item';
+                    container.appendChild(img);
+                }
+                document.getElementById('passEditor').style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+</script>
+</body>
+</html>
